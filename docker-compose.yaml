@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: uc_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - uc-network
+
+  backend-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: uc_backend_api
+    depends_on:
+      - postgres
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    networks:
+      - uc-network
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+
+networks:
+  uc-network:
+    driver: bridge
